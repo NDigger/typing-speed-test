@@ -11,7 +11,7 @@ const statsSection = document.getElementById('stats');
 const message = document.getElementById('footer-message');
 const tryAgainBtn = document.getElementById('try-again');
 
-history.pushState(null, '', '/');
+history.pushState(null, '', '/typing-speed-test');
 
 let active = false;
 let letterSpans = [];
