@@ -11,6 +11,8 @@ const statsSection = document.getElementById('stats');
 const message = document.getElementById('footer-message');
 const tryAgainBtn = document.getElementById('try-again');
 
+history.pushState(null, '', '/');
+
 let active = false;
 let letterSpans = [];
 
@@ -51,58 +53,50 @@ const removeClass = (node, className) => {
     if (node.classList.contains(className)) node.classList.remove(className);
 }
 
-const addRandomWord = async addSpace => {
-    let data = []
+const addRandomWord = addSpace => {
+    fetch('words.json')
+    .then(response => response.json())
+    .then(data => {
+        const rndWord = data[Math.floor(Math.random() * data.length)].split('');
+        const wordContainer = document.createElement('span');
+        wordContainer.classList.add('word');
 
-    try {
-        const response = await fetch('words.json');
-        data = await response.json() // WORDS LIST
-    } catch (err) {
-        console.log(err);
-        message.textContent = err;
-        message.style.color = 'red';
-    }
-
-    const rndWord = data[Math.floor(Math.random() * data.length)].split('');
-    const wordContainer = document.createElement('span');
-    wordContainer.classList.add('word');
-
-    const createSpan = letter => {
-        const span = document.createElement('span');
-        if (letter.toLowerCase() === 'space') {
-            span.textContent = '·';
-            span.setAttribute('data-key', letter);
-        } else {
-            span.textContent = letter;
-            span.setAttribute('data-key', `key${letter}`);
+        const createSpan = letter => {
+            const span = document.createElement('span');
+            if (letter.toLowerCase() === 'space') {
+                span.textContent = '·';
+                span.setAttribute('data-key', letter);
+            } else {
+                span.textContent = letter;
+                span.setAttribute('data-key', `key${letter}`);
+            }
+            span.classList.add('key');
+            return span;
         }
-        span.classList.add('key');
-        return span;
-    }
 
-    const includeSpan = span => {
-        wordContainer.append(span);
-        letterSpans.push(span);
-        session.symbols++;
-    }
+        const includeSpan = span => {
+            wordContainer.append(span);
+            letterSpans.push(span);
+            session.symbols++;
+        }
 
-    rndWord.forEach(letter => {
-        const span = createSpan(letter);
-        includeSpan(span);
+        rndWord.forEach(letter => {
+            const span = createSpan(letter);
+            includeSpan(span);
+        })
+
+        wordList.append(wordContainer);
+
+        if (addSpace) {
+            const span = createSpan('space');
+            span.style.padding = '0 10px';
+            includeSpan(span);
+        }
     })
-
-    wordList.append(wordContainer);
-
-    if (addSpace) {
-        const span = createSpan('space');
-        span.style.padding = '0 10px';
-        includeSpan(span);
-    }
 }
 
-const createWordList = async length => {
-    for (let i = 0; i < length; i++) await addRandomWord(i !== length - 1)
-    console.log(1)
+const createWordList = length => {
+    for (let i = 0; i < length; i++) addRandomWord(i !== length - 1)
 }
 
 const clearWordList = () => {
@@ -116,7 +110,7 @@ const beginWordTest = async length => {
     removeClass(wordList, 'completed');
     removeClass(wordList, 'inactive');
     clearWordList();
-    await createWordList(length);
+    createWordList(length);
     active = true;
     message.textContent = 'Press any key to begin';
 }
@@ -134,8 +128,8 @@ const wordTestCompletion = (data, session) => {
     addClass(statsSection, 'show');
     stopWordTest();
     loadResults(data);
-    loadStats(data);
     saveStats(data);
+    loadStats(data);
 }
 
 const updateTimer = () => {
